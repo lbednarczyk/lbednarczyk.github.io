@@ -1,0 +1,30 @@
+---
+title: "Final Project"
+author: "Lydia Bednarczyk"
+output: html_notebook
+---
+Load Packages:
+```{r}
+library(readr)
+library(tidyverse)
+library(DataComputing)
+library(ggplot2)
+```
+
+
+
+Data Access:
+
+```{r}
+primarymath <- read_csv("student-mat.csv")
+head(primarymath)
+
+primarypor <- read_csv("student-por.csv")
+head(primarypor)
+
+secondary <- read_csv("StudentsPerformance.csv")
+head(secondary)
+```
+
+
+
