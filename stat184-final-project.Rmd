@@ -13,7 +13,7 @@ library(ggplot2)
 library(dplyr)
 ```
 
-
+Research Question: How do the family lives of high school students effect their socializing/drinking habits, and in turn their success and interest in school?
 
 Data Access:
 
@@ -70,9 +70,9 @@ secondary %>%
          writingscore = `writing score`) %>%
   select(parentedu, mathscore, readingscore, writingscore) %>%
   group_by(parentedu) %>%
-  summarise(avgmathscore = mean(mathscore),
-            avgreadingscore = mean(readingscore),
-            avgwritingscore = mean(writingscore))
+  summarise(avgmath = mean(mathscore),
+            avgreading = mean(readingscore),
+            avgwriting = mean(writingscore))
   
 ```
 
@@ -87,8 +87,7 @@ primarymerged$parentedu <- ifelse(primarymerged$Medu>primarymerged$Fedu, primary
 # Select variables to be used in join
 joinreadyprimarymerged <-
 primarymerged %>%
-  select(subject, sex, age, address, parentedu, Pstatus, studytime, famsup, higher, famrel, Dalc, Walc, G1, G2, G3) %>%
-  mutate(grade = (G1+G2+G3)/3)
+  select(subject, sex, age, address, parentedu, Pstatus, studytime, famsup, higher, famrel, Dalc, Walc, G1, G2, G3)
 
 # User defined function to round numeric variables
 rounding <- function(x, digits) {
@@ -106,8 +105,23 @@ rounding(joinreadyprimarymerged, 2)
 mergedData <-
   joinreadyprimarymerged %>%
   left_join(joinreadysecondary)
- 
+
+# Calculate overall grade
+
+GlyphReady <-
+mergedData %>%
+  mutate(grade = (G1+G2+G3)/3) %>%
+  select(subject, sex, age, address, parentedu, Pstatus, studytime, famsup, higher, famrel, Dalc, Walc, grade, avgmath, avgreading, avgwriting)
+
 # Rounding average scores
-rounding(mergedData, 2)
+rounding(GlyphReady, 2)
 ```
+
+Data Visualization:
+
+```{r}
+GlyphReady %>%
+  ggplot(aes(x=))
+```
+
 
