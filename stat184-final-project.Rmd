@@ -3,8 +3,9 @@ title: "Final Project"
 author: "Lydia Bednarczyk"
 output: html_notebook
 ---
-Load Packages:
+Front Matter:
 ```{r}
+rm(list=ls())
 library(readr)
 library(tidyverse)
 library(DataComputing)
@@ -26,5 +27,19 @@ secondary <- read_csv("StudentsPerformance.csv")
 head(secondary)
 ```
 
+Data Wrangling:
+
+```{r}
+# Add variable that specifies what subject
+primarymath$subject <- "math"
+primarypor$subject <- "portuguese"
+
+# Combine the two dataframes into one
+primarymerged <- 
+  rbind(primarymath ,primarypor)
+
+
+
+```
 
 
