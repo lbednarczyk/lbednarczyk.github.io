@@ -10,6 +10,7 @@ library(readr)
 library(tidyverse)
 library(DataComputing)
 library(ggplot2)
+library(dplyr)
 ```
 
 
@@ -38,8 +39,44 @@ primarypor$subject <- "portuguese"
 primarymerged <- 
   rbind(primarymath ,primarypor)
 
+# Renaming observations to prepare for join
+ primarymerged$Medu[primarymerged$Medu==c("0")] <- "some high school"
+ primarymerged$Medu[primarymerged$Medu==c("1")] <- "some high school"
+ primarymerged$Medu[primarymerged$Medu==c("2")] <- "some high school"
+ primarymerged$Medu[primarymerged$Medu=="3"] <- "high school"
+ primarymerged$Medu[primarymerged$Medu==c("4")] <- "higher education"
+ 
+ primarymerged$Fedu[primarymerged$Fedu==c("0")] <- "some high school"
+ primarymerged$Fedu[primarymerged$Fedu==c("1")] <- "some high school"
+ primarymerged$Fedu[primarymerged$Fedu==c("2")] <- "some high school"
+ primarymerged$Fedu[primarymerged$Fedu=="3"] <- "high school"
+ primarymerged$Fedu[primarymerged$Fedu==c("4")] <- "higher education"
 
-
+ secondary$`parental level of education`[secondary$`parental level of education`=="some college"] <- "higher education"
+ secondary$`parental level of education`[secondary$`parental level of education`=="associate's degree"] <- "higher education"
+ secondary$`parental level of education`[secondary$`parental level of education`=="bachelor's degree"] <- "higher education"
+ secondary$`parental level of education`[secondary$`parental level of education`=="master's degree"] <- "higher education"
+ 
+ 
 ```
 
+```{r}
+#Finding average scores for each level of parental education
+ joinreadysecondary <-
+secondary %>%
+  rename(parentedu = `parental level of education`,
+         mathscore = `math score`,
+         readingscore = `reading score`,
+         writingscore = `writing score`) %>%
+  select(parentedu, mathscore, readingscore, writingscore) %>%
+  group_by(parentedu) %>%
+  summarise(avgmathscore = mean(mathscore),
+            avgreadingscore = mean(readingscore),
+            avgwritingscore = mean(writingscore))
+  
+```
+
+```{r}
+
+```
 
