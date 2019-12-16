@@ -1,9 +1,10 @@
 ---
 title: "Final Project"
 author: "Lydia Bednarczyk"
-output: html_notebook
+output:
+  html_notebook
 ---
-Front Matter:
+## Front Matter:
 ```{r}
 rm(list=ls())
 library(readr)
@@ -14,9 +15,12 @@ library(dplyr)
 library(party)
 ```
 
-Research Question: How do the family lives of high school students effect their socializing/drinking habits, and in turn their success and interest in school?
+## Research Question: 
+### How do certain factors outside of the classroom, specifically alcohol consumption levels and parental attributes effect the success of secondary school students?
 
-Data Access:
+## Data Access:
+
+The data being analyzed are from a survey given to secondary school students in Portugal in portuguese and math classes. It asks them many different questions about their parents, interests, social lives, and grades. 
 
 ```{r}
 math_table <- read_csv("student-mat.csv")
@@ -27,44 +31,53 @@ head(por_table)
 
 ```
 
-Data Wrangling:
+## Data Wrangling:
 
+I first added a variable to each of the individual data tables to specify which subject the student is taking. There is no other way of telling which class the student is in after I join them together, so this was necessary.
 ```{r}
 # Add variable that specifies what subject
 math_table$subject <- "math"
 por_table$subject <- "portuguese"
+```
 
+I joined the two tables using a full join so all of the rows in both data frames would be included in the joined table.
+
+```{r}
 # Combine the two dataframes into one
 joined <- 
   full_join(math_table ,por_table)
-
 ```
+
+To make the analysis easier, I used the ifelse function to look at the mother and father's level of education and to choose the highest one to create a new variable, parentedu, to be used in the analysis.
 
 ```{r}
 # Finding the highest level of parent education
 joined <-
 joined %>%
   mutate(parentedu = ifelse(Medu>Fedu, Medu, Fedu))
-
-
 ```
 
+I also used the mutate function to do calculations in order to make the analysis easier. The data table includes three variables of student grades from each of three trimesters, so I found the average of these values to find the final grade, stored in a new variable called grade. I did the same thing with average alcohol consumption levels, as the data table included two variables with average weekday and weeknight alcohol consumption levels. I used a weighted mean to find the overall daily average alcohol consumption level, stored in the variable avgalc. I then rounded these averages to whole numbers in order to make analysis simpler.
+
+
 ```{r}
-# Calculate overall grade and average weekly alcohol consumption level
+# Calculate overall grade and average daily alcohol consumption level
 joined <-
 joined %>%
   mutate(grade = (G1+G2+G3)/3,
          avgalc = ((Dalc*5)+(Walc*2))/7) 
 
-# Round overall grade and average weekly alcohol consumption level
+# Round overall grade and average daily alcohol consumption level
 joined <-
 joined %>%
   mutate(avgalc = round(avgalc),
          grade = round(grade))
 ```
 
+After finding the average daily alcohol consumption level of students on the levels 1-5, I classified them into two levels, high and low in order to make analysis easier. I considered the levels 1 and 2 to be low alcohol consumption and 3, 4, and 5 to be high. In order to do this, I used regular expressions in order to change the numbers to their corresponding level.
+
 ```{r}
-# Create levels of "high" or "low" alcohol consumption
+# Create levels of "high" or "low" alcohol consumption levels
 joined <-
 joined %>%
   mutate(avgalc = gsub("1", "low", avgalc),
@@ -72,18 +85,22 @@ joined %>%
          avgalc = gsub("3", "high", avgalc),
          avgalc = gsub("4", "high", avgalc),
          avgalc = gsub("5", "high", avgalc))
-
-
-
 ```
 
+Next, I grouped the data by parentedu level and counted how many students fit into each level. I found that only one student has parents with the level 0, or no education. Due to this, I filtered out the case because it will not contribute anything very meaningful the analysis and will only skew the data.
 ```{r}
+# Check how many students which each level of parentedu
+joined %>%
+  group_by(parentedu) %>%
+  summarise(count=n())
+
 # Filter out one individual with parentedu of 0
 joined <-
 joined %>%
   filter(parentedu == c("1", "2", "3", "4"))
 ```
 
+Now that my data is cleaned up and ready for analysis, I am selecting the variables that I am interested in using in my analysis. I did this because there are 37 total variables in the table, which is a lot for this project, so I narrowed it down to 12 variables that are relevant to my research question.
 
 ```{r}
 # Select variables to be used in analysis
@@ -92,18 +109,14 @@ joined %>%
   select(school, sex, age, address, famsize, Pstatus, famsup, famrel, subject, grade, avgalc, parentedu)
 ```
 
+I used a machine learning model to determine which variables that are being looked at have the largest statistical effect on student grades. I know that grade is the variable that is being effected by the other variables, so I decided to look specifically at the average daily alcohol level, parent education level, level of family relationship, and if the student recieves support from their families to see if they have a significant effect on grade.
+
 ```{r}
 # Make machine learning model
 model <- lm(grade ~ avgalc + parentedu + famrel + famsup, data = GlyphReady)
 
 summary(model)
 ```
-
-```{r}
-GlyphReady %>%
-  filter(parentedu == "0")
-```
-
 
 
 Data Visualizations:
