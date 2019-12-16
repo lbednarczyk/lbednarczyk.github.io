@@ -11,6 +11,7 @@ library(tidyverse)
 library(DataComputing)
 library(ggplot2)
 library(dplyr)
+library(party)
 ```
 
 Research Question: How do the family lives of high school students effect their socializing/drinking habits, and in turn their success and interest in school?
@@ -18,128 +19,76 @@ Research Question: How do the family lives of high school students effect their 
 Data Access:
 
 ```{r}
-primarymath <- read_csv("student-mat.csv")
-head(primarymath)
+math_table <- read_csv("student-mat.csv")
+head(math_table)
 
-primarypor <- read_csv("student-por.csv")
-head(primarypor)
+por_table <- read_csv("student-por.csv")
+head(por_table)
 
-secondary <- read_csv("StudentsPerformance.csv")
-head(secondary)
 ```
 
 Data Wrangling:
 
 ```{r}
 # Add variable that specifies what subject
-primarymath$subject <- "math"
-primarypor$subject <- "portuguese"
+math_table$subject <- "math"
+por_table$subject <- "portuguese"
 
 # Combine the two dataframes into one
-primarymerged <- 
-  rbind(primarymath ,primarypor)
+joined <- 
+  full_join(math_table ,por_table)
 
-# Renaming observations to prepare for join, changing into 3 groups; 1= some high school, 2= high school degree, 3= college degree
- primarymerged$Medu[primarymerged$Medu=="0"] <- "1"
- primarymerged$Medu[primarymerged$Medu=="2"] <- "1"
- primarymerged$Medu[primarymerged$Medu=="3"] <- "2"
- primarymerged$Medu[primarymerged$Medu=="4"] <- "2"
- 
- primarymerged$Fedu[primarymerged$Fedu=="0"] <- "1"
- primarymerged$Fedu[primarymerged$Fedu=="2"] <- "1"
- primarymerged$Fedu[primarymerged$Fedu=="3"] <- "2"
- primarymerged$Fedu[primarymerged$Fedu=="4"] <- "3"
-
- secondary$`parental level of education`[secondary$`parental level of education`=="some high school"] <- "1"
- secondary$`parental level of education`[secondary$`parental level of education`=="high school"] <- "2"
- secondary$`parental level of education`[secondary$`parental level of education`=="some college"] <- "2"
- secondary$`parental level of education`[secondary$`parental level of education`=="associate's degree"] <- "3"
- secondary$`parental level of education`[secondary$`parental level of education`=="bachelor's degree"] <- "3"
- secondary$`parental level of education`[secondary$`parental level of education`=="master's degree"] <- "3"
- 
- 
- 
- 
-```
-
-```{r}
-#Finding average scores for each level of parental education
- joinreadysecondary <-
-secondary %>%
-  rename(parentedu = `parental level of education`,
-         mathscore = `math score`,
-         readingscore = `reading score`,
-         writingscore = `writing score`) %>%
-  select(parentedu, mathscore, readingscore, writingscore) %>%
-  group_by(parentedu) %>%
-  summarise(avgmath = mean(mathscore),
-            avgreading = mean(readingscore),
-            avgwriting = mean(writingscore))
-  
 ```
 
 ```{r}
 # Finding the highest level of parent education
+joined <-
+joined %>%
+  mutate(parentedu = ifelse(Medu>Fedu, Medu, Fedu))
 
-primarymerged$parentedu <- ifelse(primarymerged$Medu>primarymerged$Fedu, primarymerged$Medu, primarymerged$Fedu)
 
 ```
 
 ```{r}
-# Select variables to be used in join
-joinreadyprimarymerged <-
-primarymerged %>%
-  select(subject, sex, age, address, parentedu, Pstatus, studytime, famsup, higher, famrel, Dalc, Walc, G1, G2, G3)
-
-# User defined function to round numeric variables
-rounding <- function(x, digits) {
-  numeric_columns <- sapply(x, mode) == 'numeric'
-  x[numeric_columns] <- round(x[numeric_columns], digits)
-  x
-}
-
-rounding(joinreadyprimarymerged, 2)
-```
-
-```{r}
-# Joining the data frames
-
-mergedData <-
-  joinreadyprimarymerged %>%
-  left_join(joinreadysecondary)
-
 # Calculate overall grade and average weekly alcohol consumption level
-
-GlyphReady <-
-mergedData %>%
+joined <-
+joined %>%
   mutate(grade = (G1+G2+G3)/3,
-         avgalc = ((Dalc*5)+(Walc*2))/7) %>%
-  select(subject, sex, age, address, parentedu, Pstatus, studytime, famsup, higher, famrel, avgalc, grade, avgmath, avgreading, avgwriting)
+         avgalc = ((Dalc*5)+(Walc*2))/7) 
 
+# Round overall grade and average weekly alcohol consumption level
+joined <-
+joined %>%
+  mutate(avgalc = round(avgalc),
+         grade = round(grade))
+```
+
+```{r}
 # Create levels of "high" or "low" alcohol consumption
+joined <-
+joined %>%
+  mutate(avgalc = gsub("1", "low", avgalc),
+         avgalc = gsub("2", "low", avgalc),
+         avgalc = gsub("3", "low", avgalc),
+         avgalc = gsub("4", "high", avgalc),
+         avgalc = gsub("5", "high", avgalc))
 
-GlyphReady$avgalc <- ifelse(GlyphReady$avgalc >2.5, GlyphReady$avgalc <- "high", GlyphReady$avgalc <- "low")
-
-# Rounding average scores
-rounding(GlyphReady, 2)
-
-
-# Change observation names of famsup
-
-GlyphReady$famsup[GlyphReady$famsup=="yes"] <- "support"
-GlyphReady$famsup[GlyphReady$famsup=="no"] <- "nosupport"
-
-
+#
 
 ```
 
-Data Visualization:
+```{r}
+# Select variables to be used in analysis
+GlyphReady <-
+joined %>%
+  select(school, sex, age, address, famsize, Pstatus, famsup, famrel, subject, grade, avgalc, parentedu)
+```
 
 ```{r}
-GlyphReady %>%
-  ggplot(aes(x=parentedu, y=grade)) +
-  geom_boxplot(aes(fill=avgalc)) +
-  facet_wrap( ~ famsup)
+# Make machine learning model
+model <- lm(grade ~ avgalc + parentedu + famrel + famsup, data = GlyphReady)
+
+summary(model)
 ```
 
 
