@@ -69,13 +69,21 @@ joined <-
 joined %>%
   mutate(avgalc = gsub("1", "low", avgalc),
          avgalc = gsub("2", "low", avgalc),
-         avgalc = gsub("3", "low", avgalc),
+         avgalc = gsub("3", "high", avgalc),
          avgalc = gsub("4", "high", avgalc),
          avgalc = gsub("5", "high", avgalc))
 
-#
+
 
 ```
+
+```{r}
+# Filter out one individual with parentedu of 0
+joined <-
+joined %>%
+  filter(parentedu == c("1", "2", "3", "4"))
+```
+
 
 ```{r}
 # Select variables to be used in analysis
@@ -90,5 +98,51 @@ model <- lm(grade ~ avgalc + parentedu + famrel + famsup, data = GlyphReady)
 
 summary(model)
 ```
+
+```{r}
+GlyphReady %>%
+  filter(parentedu == "0")
+```
+
+
+
+Data Visualizations:
+
+Amount of low vs high alcohol consumption
+
+```{r}
+GlyphReady %>%
+  ggplot(aes(x=avgalc)) +
+  geom_bar()
+```
+
+
+Amount of low vs high alcohol consumption
+
+```{r}
+GlyphReady %>%
+  ggplot(aes(x=age, fill=avgalc)) +
+  geom_bar(position="dodge") 
+
+  
+```
+
+Distribution of Parent Education level
+
+```{r}
+GlyphReady %>%
+  ggplot(aes(x=parentedu)) +
+  geom_bar()
+```
+
+Distribution of grades based on parent education
+```{r}
+GlyphReady %>%
+  ggplot(aes(x=parentedu, y=grade)) +
+  geom_boxplot(aes(group=parentedu)) +
+  xlab("Parent Education Level") +
+  ylab("Average Grade")
+```
+
 
 
