@@ -6,6 +6,7 @@ output:
 ---
 ## Front Matter:
 ```{r}
+
 rm(list=ls())
 library(readr)
 library(tidyverse)
@@ -13,6 +14,7 @@ library(DataComputing)
 library(ggplot2)
 library(dplyr)
 library(party)
+
 ```
 
 ## Research Question: 
@@ -23,11 +25,12 @@ library(party)
 The data being analyzed are from a survey given to secondary school students in Portugal in portuguese and math classes. It asks them many different questions about their parents, interests, social lives, and grades. 
 
 ```{r}
-math_table <- read_csv("student-mat.csv")
-head(math_table)
+# Load and inspect data tables
+Math_table <- read_csv("student-mat.csv")
+head(Math_table)
 
-por_table <- read_csv("student-por.csv")
-head(por_table)
+Por_table <- read_csv("student-por.csv")
+head(Por_table)
 
 ```
 
@@ -36,42 +39,41 @@ head(por_table)
 I first added a variable to each of the individual data tables to specify which subject the student is taking. This is necessary because there is no other way of telling which class the student is in after they are joined together.
 ```{r}
 # Add variable that specifies what subject
-math_table$subject <- "math"
-por_table$subject <- "portuguese"
+Math_table$subject <- "math"
+Por_table$subject <- "portuguese"
 ```
 
 I joined the two tables using a full join so all of the rows in both data frames would be included in the joined table.
 
 ```{r}
 # Combine the two dataframes into one
-joined <- 
-  full_join(math_table ,por_table)
+Joined <- 
+  full_join(Math_table, Por_table)
 
-head(joined)
+head(Joined)
 ```
 
 To make the analysis easier, I used the ifelse function to look at the mother and father's level of education and to choose the highest one to create a new variable, parentedu, to be used in the analysis.
 
 ```{r}
 # Finding the highest level of parent education
-joined <-
-joined %>%
-  mutate(parentedu = ifelse(Medu>Fedu, Medu, Fedu))
+Joined <-
+Joined %>%
+  mutate(parentedu = ifelse(Medu > Fedu, Medu, Fedu))
 ```
 
 I also used the mutate function to do calculations in order to make the analysis easier. The data table includes three variables of student grades from each of three trimesters, so I found the average of these values to find the final grade, stored in a new variable called grade. I did the same thing with average alcohol consumption levels, as the data table included two variables with average weekday and weeknight alcohol consumption levels. I used a weighted mean to find the overall daily average alcohol consumption level, stored in the variable avgalc. I then rounded these averages to whole numbers in order to make analysis simpler.
 
-
 ```{r}
 # Calculate overall grade and average daily alcohol consumption level
-joined <-
-joined %>%
-  mutate(grade = (G1+G2+G3)/3,
-         avgalc = ((Dalc*5)+(Walc*2))/7) 
+Joined <-
+Joined %>%
+  mutate(grade = (G1 + G2 + G3) / 3,
+         avgalc = ((Dalc * 5) + (Walc * 2)) / 7) 
 
 # Round overall grade and average daily alcohol consumption level
-joined <-
-joined %>%
+Joined <-
+Joined %>%
   mutate(avgalc = round(avgalc),
          grade = round(grade))
 ```
@@ -80,8 +82,8 @@ After finding the average daily alcohol consumption level of students on the lev
 
 ```{r}
 # Create levels of "high" or "low" alcohol consumption levels
-joined <-
-joined %>%
+Joined <-
+Joined %>%
   mutate(avgalc = gsub("1", "low", avgalc),
          avgalc = gsub("2", "low", avgalc),
          avgalc = gsub("3", "high", avgalc),
@@ -92,23 +94,23 @@ joined %>%
 Next, I grouped the data by parentedu level and counted how many students fit into each level. I found that only one student has parents with the level 0, or no education. Due to this, I filtered out the case because it will not contribute anything very meaningful the analysis and will only skew the data.
 ```{r}
 # Check how many students which each level of parentedu
-joined %>%
+Joined %>%
   group_by(parentedu) %>%
-  summarise(count=n())
+  summarise(count = n())
 ```
 ```{r}
 # Filter out one individual with parentedu of 0
-joined <-
-joined %>%
+Joined <-
+Joined %>%
   filter(parentedu == c("1", "2", "3", "4"))
 ```
 
-Now that my data is cleaned up and ready for analysis, I am selecting the variables that I am interested in using in my analysis. I did this because there are 37 total variables in the table, which is a lot for this project, so I narrowed it down to 12 variables that are relevant to my research question.
+Now that my data is cleaned up and ready for analysis, I selected the variables that I am interested in using in my analysis. I did this because there are 37 total variables in the table, which is a lot for this project, so I narrowed it down to 12 variables that are relevant to my research question.
 
 ```{r}
 # Select variables to be used in analysis
 GlyphReady <-
-joined %>%
+Joined %>%
   select(school, sex, age, address, famsize, Pstatus, famsup, famrel, subject, grade, avgalc, parentedu)
 ```
 
@@ -128,7 +130,7 @@ summary(model)
 
 ```{r}
 GlyphReady %>%
-  ggplot(aes(x=avgalc)) +
+  ggplot(aes(x = avgalc)) +
   geom_bar() +
   xlab("Average Level of Daily Alcohol Consumption")
 ```
@@ -138,10 +140,8 @@ This plot shows the number of students with a high daily alcohol consumption lev
 
 ```{r}
 GlyphReady %>%
-  ggplot(aes(x=age, fill=avgalc)) +
-  geom_bar(position="dodge") 
-
-  
+  ggplot(aes(x = age, fill = avgalc)) +
+  geom_bar(position = "dodge") 
 ```
 This plot shows the relationship between age and alcohol consumption level. By looking at the graph, it can be determined that there is not much of a difference between age and the proportion of low to high alcohol consumption. However, it does show the proportion become relatively equal around students that are 19, completely low for 20, and completely high for ages 21 and 22, but this is likely to be because of how few students are in these age ranges.
 
@@ -149,7 +149,7 @@ This plot shows the relationship between age and alcohol consumption level. By l
 
 ```{r}
 GlyphReady %>%
-  ggplot(aes(x=parentedu)) +
+  ggplot(aes(x = parentedu)) +
   geom_bar() +
   xlab("Highest Level of Parent Education") 
 ```
@@ -158,24 +158,35 @@ This plot shows the distribution of highest level of education of the parents of
 ### Distribution of Overall Grades by Subject
 ```{r}
 GlyphReady %>%
-  ggplot(aes(x=grade)) +
-  geom_density(aes(color=subject, fill=subject), alpha=0.5) 
+  ggplot(aes(x = grade)) +
+  geom_density(aes(color = subject, fill = subject), alpha = 0.5) 
 ```
 This plot shows the density distribution of student grades in math and portuguese. It shows that students tend to do better in portuguese than math, as the density distribution for portuguese peaks much higher from around the grades 9-13, while for math it peaks at a lower level around the grades 8-10.
+
+
+### Relationship between Family Relationships and Grades
+```{r}
+GlyphReady %>%
+  ggplot(aes(x = famrel, y = grade, group = famrel)) +
+  geom_boxplot(aes(fill = famrel), alpha = 0.8, show.legend = FALSE) +
+  facet_wrap(~ famsup, labeller = label_both) +
+  xlab("Quality of Family Relationship") 
+```
+This plot shows the relationship between the quality of a student's relationship with their family (with 1 being very bad and 5 being excellent) and their grades. After analyzing the graph it seems like the quality of family relationship has no effect on the grades a student recieves. The plots are also separted into facets by whether or not they recieve support from their parents, which also surprisingly does not seem to have an effect on their grades.
 
 ### Effect of Alcohol Consumption and Parent Education on Student Grades
 ```{r}
 GlyphReady %>%
-  ggplot(aes(x=parentedu, y=grade, group=parentedu)) +
-  geom_boxplot(aes(fill=parentedu), alpha=0.8, show.legend = FALSE) +
+  ggplot(aes(x = parentedu, y = grade, group = parentedu)) +
+  geom_boxplot(aes(fill = parentedu), alpha = 0.8, show.legend = FALSE) +
   facet_wrap( ~ avgalc, labeller = label_both) +
-  geom_point(position = "jitter",alpha=0.3) +
+  geom_point(position = "jitter",alpha = 0.3) +
   xlab("Highest Level of Parent Education") +
   ylab("Average Grade")
 ```
-This plot shows the relationship between average grade, highest level of parent education, and average daily alcohol consumption levels. It shows that on average, there is a positive relationship between parent education level and a student's average grades. It also shows that students with high levels of alcohol consumption tend to have lower average grades than those with low levels. The jittering shows that the average grades are widely spread out and there are not large clumps of similar grades.
+This plot shows the relationship between average grade, highest level of parent education, and average daily alcohol consumption levels. It shows that on average, there is a positive relationship between parent education level and a student's average grades. This relationship is stronger in students with low alcohol consumption. It also shows that students with high levels of alcohol consumption tend to have lower average grades than those with low levels. The jittering shows that the average grades are widely spread out and there are not large clumps of similar grades.
 
-
-
+## Conclusions
+After wrangling the data and analyzing many of its variables with different plots, there are a few conclusions that can be drawn. According to the data, students who consume high amounts of alcohol have grades that are on average lower than those students who do not consume alcohol. The data also shows that while family does have an effect on student grades, certain factors have much stronger effects than others. From the factors I looked at, the highest level of education from a student's parents has the strongest effect on the student's grade. As the level of parental education increases, so do the average grades of students. I found that the quality of family relationships and family support does not seem to have much of an effect, if any, on student grades.  
 
 
