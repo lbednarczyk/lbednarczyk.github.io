@@ -33,7 +33,7 @@ head(por_table)
 
 ## Data Wrangling:
 
-I first added a variable to each of the individual data tables to specify which subject the student is taking. There is no other way of telling which class the student is in after I join them together, so this was necessary.
+I first added a variable to each of the individual data tables to specify which subject the student is taking. This is necessary because there is no other way of telling which class the student is in after they are joined together.
 ```{r}
 # Add variable that specifies what subject
 math_table$subject <- "math"
@@ -46,6 +46,8 @@ I joined the two tables using a full join so all of the rows in both data frames
 # Combine the two dataframes into one
 joined <- 
   full_join(math_table ,por_table)
+
+head(joined)
 ```
 
 To make the analysis easier, I used the ifelse function to look at the mother and father's level of education and to choose the highest one to create a new variable, parentedu, to be used in the analysis.
@@ -93,7 +95,8 @@ Next, I grouped the data by parentedu level and counted how many students fit in
 joined %>%
   group_by(parentedu) %>%
   summarise(count=n())
-
+```
+```{r}
 # Filter out one individual with parentedu of 0
 joined <-
 joined %>%
@@ -109,7 +112,7 @@ joined %>%
   select(school, sex, age, address, famsize, Pstatus, famsup, famrel, subject, grade, avgalc, parentedu)
 ```
 
-I used a machine learning model to determine which variables that are being looked at have the largest statistical effect on student grades. I know that grade is the variable that is being effected by the other variables, so I decided to look specifically at the average daily alcohol level, parent education level, level of family relationship, and if the student recieves support from their families to see if they have a significant effect on grade.
+I used a machine learning model to determine which variables that are being looked at have the largest statistical effect on student grades. I know that grade is the variable that is being effected by the other variables, so I decided to look specifically at the average daily alcohol level, parent education level, level of family relationship, and if the student recieves support from their families to see if they have a significant effect on grade. The data shows that average alcohol and parent education level have the highest levels of significants, so those are the variables I will mostly focus at looking at more in depth in my analysis.
 
 ```{r}
 # Make machine learning model
@@ -119,18 +122,19 @@ summary(model)
 ```
 
 
-Data Visualizations:
+## Data Visualizations:
 
-Amount of low vs high alcohol consumption
+### Number of Students with High vs Low Alcohol Consumption
 
 ```{r}
 GlyphReady %>%
   ggplot(aes(x=avgalc)) +
-  geom_bar()
+  geom_bar() +
+  xlab("Average Level of Daily Alcohol Consumption")
 ```
+This plot shows the number of students with a high daily alcohol consumption level compared to a low level. It shows that there are many more students that consume low amounts of alcohol than high amounts. 
 
-
-Amount of low vs high alcohol consumption
+### Level of Alcohol Consumption by Age
 
 ```{r}
 GlyphReady %>%
@@ -139,23 +143,39 @@ GlyphReady %>%
 
   
 ```
+This plot shows the relationship between age and alcohol consumption level. By looking at the graph, it can be determined that there is not much of a difference between age and the proportion of low to high alcohol consumption. However, it does show the proportion become relatively equal around students that are 19, completely low for 20, and completely high for ages 21 and 22, but this is likely to be because of how few students are in these age ranges.
 
-Distribution of Parent Education level
+### Distribution of Highest Level of Parent Education
 
 ```{r}
 GlyphReady %>%
   ggplot(aes(x=parentedu)) +
-  geom_bar()
+  geom_bar() +
+  xlab("Highest Level of Parent Education") 
 ```
+This plot shows the distribution of highest level of education of the parents of each student. 1 represents primary education (up to 4th grade), 2 represents 5th to 9th grade, 3 represents secondary education and 4 represents higher education. It shows the amount of parents increase as the level of education increases, with the same amount completing 5th to 9th grade and secondary education.
 
-Distribution of grades based on parent education
+### Distribution of Overall Grades by Subject
 ```{r}
 GlyphReady %>%
-  ggplot(aes(x=parentedu, y=grade)) +
-  geom_boxplot(aes(group=parentedu)) +
-  xlab("Parent Education Level") +
+  ggplot(aes(x=grade)) +
+  geom_density(aes(color=subject, fill=subject), alpha=0.5) 
+```
+This plot shows the density distribution of student grades in math and portuguese. It shows that students tend to do better in portuguese than math, as the density distribution for portuguese peaks much higher from around the grades 9-13, while for math it peaks at a lower level around the grades 8-10.
+
+### Effect of Alcohol Consumption and Parent Education on Student Grades
+```{r}
+GlyphReady %>%
+  ggplot(aes(x=parentedu, y=grade, group=parentedu)) +
+  geom_boxplot(aes(fill=parentedu), alpha=0.8, show.legend = FALSE) +
+  facet_wrap( ~ avgalc, labeller = label_both) +
+  geom_point(position = "jitter",alpha=0.3) +
+  xlab("Highest Level of Parent Education") +
   ylab("Average Grade")
 ```
+This plot shows the relationship between average grade, highest level of parent education, and average daily alcohol consumption levels. It shows that on average, there is a positive relationship between parent education level and a student's average grades. It also shows that students with high levels of alcohol consumption tend to have lower average grades than those with low levels. The jittering shows that the average grades are widely spread out and there are not large clumps of similar grades.
+
+
 
 
 
