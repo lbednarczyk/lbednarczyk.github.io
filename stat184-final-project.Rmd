@@ -6,7 +6,6 @@ output:
 ---
 ## Front Matter:
 ```{r}
-
 rm(list=ls())
 library(readr)
 library(tidyverse)
@@ -14,7 +13,6 @@ library(DataComputing)
 library(ggplot2)
 library(dplyr)
 library(party)
-
 ```
 
 ## Research Question: 
